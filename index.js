@@ -9,14 +9,18 @@ import authRoute from "./src/modules/auth/auth.route.js";
 import donationRoute from "./src/modules/donation/dontaion.route.js";
 
 const app = express();
-app.use(cors());
+app.use(
+  cors({
+    origin: "*",
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 dotenv.config();
 
 //Routes
 app.get("/", (req, res) => {
-  res.send("Welcome To Donation Backend Code!");
+  res.send("<h1>Welcome To Donation Backend Code!</h1>");
 });
 app.use("/api/auth", authRoute);
 app.use("/api/donation", donationRoute);
