@@ -8,6 +8,7 @@ import { AppError } from "./src/utils/AppError.js";
 import authRoute from "./src/modules/auth/auth.route.js";
 import donationRoute from "./src/modules/donation/dontaion.route.js";
 import addictionRoute from "./src/modules/addection/addection.route.js";
+import donateRoute from "./src/modules/donate/donate.route.js";
 
 const app = express();
 app.use(
@@ -26,6 +27,7 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRoute);
 app.use("/api/donation", donationRoute);
 app.use("/api/addiction", addictionRoute);
+app.use("/api/donate", donateRoute);
 
 //Undefined Routes Handling
 app.all(/(.*)/, (req, res, next) => {
