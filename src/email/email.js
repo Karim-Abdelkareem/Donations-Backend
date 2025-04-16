@@ -1,7 +1,9 @@
+// Import required packages for email handling and environment variables
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 dotenv.config();
 
+// Create a nodemailer transport configuration using Gmail service
 const transporter = nodemailer.createTransport({
   service: "GMAIL",
   auth: {
@@ -10,7 +12,9 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+// Function to send email confirmation links to newly registered users
 export const sendConfirmationEmail = async (email, token) => {
+  // Configure email content and styling
   const mailOptions = {
     from: `"Donation App" <${process.env.GMAIL_USER}>`,
     to: email,
@@ -34,10 +38,12 @@ export const sendConfirmationEmail = async (email, token) => {
             <p style="margin: 5px 0;">If you have any questions, please contact our support team.</p>
           </div>
     `,
+    // Fallback plain text version for email clients that don't support HTML
     text: `Please click on this link to confirm your email: ${process.env.FRONTEND_URL}/confirm-email/${token}`,
   };
 
   try {
+    // Send the email and get sending information
     const info = await transporter.sendMail(mailOptions);
     console.log("Email sent: ", info.response);
     return info;
@@ -47,11 +53,14 @@ export const sendConfirmationEmail = async (email, token) => {
   }
 };
 
+// Function to send password reset links to users who forgot their password
 export const sendResetPasswordEmail = async (email, token) => {
+  // Configure email content and styling
   const mailOptions = {
     from: `"Donation App" <${process.env.GMAIL_USER}>`,
     to: email,
     subject: "Reset your password",
+    // Fallback plain text version
     text: `Please click on this link to reset your password: ${process.env.FRONTEND_URL}/reset-password/${token}`,
     html: `
     <div style="background-color: #4f46e5; padding: 30px 0; text-align: center;">
@@ -74,6 +83,7 @@ export const sendResetPasswordEmail = async (email, token) => {
     `,
   };
   try {
+    // Send the password reset email
     await transporter.sendMail(mailOptions);
     console.log("Email sent");
   } catch (error) {

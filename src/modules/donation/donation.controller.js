@@ -1,16 +1,18 @@
+// استيراد النماذج والأدوات المساعدة
 import donationModel from "../../database/models/donation.model.js";
 import { AppError } from "../../utils/AppError.js";
 import { catchAsync } from "../../utils/catchAsync.js";
 
+// دالة لإنشاء رمز فريد للتبرع
 const generateDonationCode = () => {
   const timestamp = Date.now().toString().slice(-5);
   const random = Math.floor(1000 + Math.random() * 9000);
   return `DON-${(parseInt(timestamp) + random) % 100000}`.padStart(9, "0");
 };
 
+// إنشاء حملة تبرع جديدة
 export const createCampaign = catchAsync(async (req, res, next) => {
   const { title, description, goalAmount, category, proofImages } = req.body;
-  console.log(req.body);
 
   if (!title || !description || !goalAmount || !category || !proofImages) {
     return next(new AppError("Please provide all required fields", 400));
@@ -18,6 +20,7 @@ export const createCampaign = catchAsync(async (req, res, next) => {
 
   const donationCode = generateDonationCode();
   const newCampaign = await donationModel.create({
+    user: req.user._id,
     donationCode,
     title,
     description,
@@ -34,6 +37,7 @@ export const createCampaign = catchAsync(async (req, res, next) => {
   });
 });
 
+// الحصول على جميع الحملات النشطة
 export const getAllCampaigns = catchAsync(async (req, res, next) => {
   const campaigns = await donationModel.find({ status: "active" });
   res.status(200).json({
@@ -45,6 +49,7 @@ export const getAllCampaigns = catchAsync(async (req, res, next) => {
   });
 });
 
+// الحصول على الحملات غير النشطة (للمشرف)
 export const getAllInactiveCampaigns = catchAsync(async (req, res, next) => {
   const campaigns = await donationModel.find({ status: "inactive" });
   res.status(200).json({
@@ -56,6 +61,7 @@ export const getAllInactiveCampaigns = catchAsync(async (req, res, next) => {
   });
 });
 
+// الحصول على حملة محددة
 export const getSingleCampaign = catchAsync(async (req, res, next) => {
   const campaign = await donationModel.findById(req.params.id);
   if (!campaign) {
@@ -69,6 +75,7 @@ export const getSingleCampaign = catchAsync(async (req, res, next) => {
   });
 });
 
+// تحديث بيانات حملة
 export const updateCampaign = catchAsync(async (req, res, next) => {
   const {
     title,
@@ -97,7 +104,9 @@ export const updateCampaign = catchAsync(async (req, res, next) => {
   });
 });
 
+// حذف حملة
 export const deleteCampaign = catchAsync(async (req, res, next) => {
+  console.log(req.params.id);
   const campaign = await donationModel.findByIdAndDelete(req.params.id);
   if (!campaign) {
     return next(new AppError("No campaign found with that ID", 404));
@@ -108,6 +117,7 @@ export const deleteCampaign = catchAsync(async (req, res, next) => {
   });
 });
 
+// تفعيل حملة
 export const activateCampaign = catchAsync(async (req, res, next) => {
   const campaign = await donationModel.findByIdAndUpdate(
     req.params.id,
@@ -125,6 +135,7 @@ export const activateCampaign = catchAsync(async (req, res, next) => {
   });
 });
 
+// تعطيل حملة
 export const deactivateCampaign = catchAsync(async (req, res, next) => {
   const campaign = await donationModel.findByIdAndUpdate(
     req.params.id,
@@ -142,6 +153,7 @@ export const deactivateCampaign = catchAsync(async (req, res, next) => {
   });
 });
 
+// الحصول على جميع الحملات للمشرف
 export const getAllCampaignsAdmin = catchAsync(async (req, res, next) => {
   const campaigns = await donationModel.find();
   res.status(200).json({
@@ -150,5 +162,16 @@ export const getAllCampaignsAdmin = catchAsync(async (req, res, next) => {
     data: {
       campaigns,
     },
+  });
+});
+
+export const getUserCampaigns = catchAsync(async (req, res, next) => {
+  const user = req.user;
+  if (!user) return next(new AppError("Please login first", 401));
+  const campaigns = await donationModel.find({ user: req.user.id });
+  res.status(200).json({
+    status: "success",
+    results: campaigns.length,
+    data: campaigns,
   });
 });

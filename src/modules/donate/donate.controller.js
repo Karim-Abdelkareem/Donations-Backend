@@ -1,16 +1,18 @@
+// استيراد النماذج والأدوات المساعدة
 import donateModel from "../../database/models/donate.model.js";
 import { AppError } from "../../utils/AppError.js";
 import { catchAsync } from "../../utils/catchAsync.js";
 
+// دالة لإنشاء رمز فريد للتبرع العيني
 const generateDonationCode = () => {
   const timestamp = Date.now().toString().slice(-5);
   const random = Math.floor(1000 + Math.random() * 9000);
   return `DON-${(parseInt(timestamp) + random) % 100000}`.padStart(9, "0");
 };
 
+// إنشاء حملة تبرع عيني جديدة
 export const createCampaign = catchAsync(async (req, res, next) => {
   const { title, description, phone, proofImages } = req.body;
-  console.log(req.body);
 
   if (!title || !description || !phone || !proofImages) {
     return next(new AppError("Please provide all required fields", 400));
@@ -18,6 +20,7 @@ export const createCampaign = catchAsync(async (req, res, next) => {
 
   const donateCode = generateDonationCode();
   const newCampaign = await donateModel.create({
+    user: req.user._id,
     donateCode,
     title,
     description,
@@ -33,6 +36,7 @@ export const createCampaign = catchAsync(async (req, res, next) => {
   });
 });
 
+// الحصول على جميع حملات التبرع العيني النشطة
 export const getAllCampaigns = catchAsync(async (req, res, next) => {
   const campaigns = await donateModel.find({ status: "active" });
   res.status(200).json({
@@ -44,6 +48,7 @@ export const getAllCampaigns = catchAsync(async (req, res, next) => {
   });
 });
 
+// الحصول على الحملات غير النشطة (للمشرف)
 export const getAllInactiveCampaigns = catchAsync(async (req, res, next) => {
   const campaigns = await donateModel.find({ status: "inactive" });
   res.status(200).json({
@@ -55,6 +60,7 @@ export const getAllInactiveCampaigns = catchAsync(async (req, res, next) => {
   });
 });
 
+// الحصول على حملة تبرع عيني محددة
 export const getSingleCampaign = catchAsync(async (req, res, next) => {
   const campaign = await donateModel.findById(req.params.id);
   if (!campaign) {
@@ -68,6 +74,7 @@ export const getSingleCampaign = catchAsync(async (req, res, next) => {
   });
 });
 
+// تحديث بيانات حملة تبرع عيني
 export const updateCampaign = catchAsync(async (req, res, next) => {
   const { title, description, phone, proofImages } = req.body;
 
@@ -89,7 +96,10 @@ export const updateCampaign = catchAsync(async (req, res, next) => {
   });
 });
 
+// حذف حملة تبرع عيني
 export const deleteCampaign = catchAsync(async (req, res, next) => {
+  console.log(req.params.id);
+
   const campaign = await donateModel.findByIdAndDelete(req.params.id);
   if (!campaign) {
     return next(new AppError("No campaign found with that ID", 404));
@@ -100,6 +110,7 @@ export const deleteCampaign = catchAsync(async (req, res, next) => {
   });
 });
 
+// تفعيل حملة تبرع عيني
 export const activateCampaign = catchAsync(async (req, res, next) => {
   const campaign = await donateModel.findByIdAndUpdate(
     req.params.id,
@@ -117,6 +128,7 @@ export const activateCampaign = catchAsync(async (req, res, next) => {
   });
 });
 
+// تعطيل حملة تبرع عيني
 export const deactivateCampaign = catchAsync(async (req, res, next) => {
   const campaign = await donateModel.findByIdAndUpdate(
     req.params.id,
@@ -134,6 +146,7 @@ export const deactivateCampaign = catchAsync(async (req, res, next) => {
   });
 });
 
+// الحصول على جميع حملات التبرع العيني للمشرف
 export const getAllCampaignsAdmin = catchAsync(async (req, res, next) => {
   const campaigns = await donateModel.find();
   res.status(200).json({
@@ -142,5 +155,16 @@ export const getAllCampaignsAdmin = catchAsync(async (req, res, next) => {
     data: {
       campaigns,
     },
+  });
+});
+
+export const getUserCampaigns = catchAsync(async (req, res, next) => {
+  const user = req.user;
+  if (!user) return next(new AppError("Please login first", 401));
+  const campaigns = await donateModel.find({ user: req.user.id });
+  res.status(200).json({
+    status: "success",
+    results: campaigns.length,
+    data: campaigns,
   });
 });

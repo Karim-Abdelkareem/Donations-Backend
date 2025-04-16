@@ -1,13 +1,16 @@
+// استيراد المكتبات والوحدات المطلوبة
 import { catchAsync } from "../../utils/catchAsync.js";
 import Addiction from "../../database/models/addection.model.js";
 import { differenceInDays, isSameDay } from "date-fns";
 import { AppError } from "../../utils/AppError.js";
 
-// Get user's progress for all addictions
+// الحصول على تقدم المستخدم لجميع الإدمانات
 export const getProgress = catchAsync(async (req, res) => {
+  // البحث عن تقدم المستخدم في قاعدة البيانات
   let progress = await Addiction.findOne({ user: req.user._id });
 
   if (!progress) {
+    // إنشاء سجل جديد إذا لم يكن موجوداً
     progress = await Addiction.create({
       user: req.user._id,
       addictions: [],
@@ -16,24 +19,25 @@ export const getProgress = catchAsync(async (req, res) => {
     const today = new Date();
     let hasUpdates = false;
 
-    // Check each addiction for missed check-ins
+    // التحقق من كل إدمان للتسجيلات الفائتة
     progress.addictions.forEach((addiction) => {
       if (addiction.lastCheckIn) {
         const diff = differenceInDays(today, new Date(addiction.lastCheckIn));
         if (diff > 1) {
-          // Reset streak if more than one day has passed
+          // إعادة تعيين التتابع إذا مر أكثر من يوم
           addiction.streak = 0;
           hasUpdates = true;
         }
       }
     });
 
-    // Save if any streaks were reset
+    // حفظ التغييرات إذا تم إعادة تعيين أي تتابع
     if (hasUpdates) {
       await progress.save();
     }
   }
 
+  // إرسال الاستجابة
   res.status(200).json({
     status: "success",
     data: {
@@ -42,8 +46,9 @@ export const getProgress = catchAsync(async (req, res) => {
   });
 });
 
-// Handle daily check-in for specific addiction
+// معالجة تسجيل الدخول اليومي لإدمان محدد
 export const checkIn = catchAsync(async (req, res) => {
+  // التحقق من وجود الفئة
   const { category } = req.body;
   if (!category) {
     throw new AppError("Addiction category is required", 400);
@@ -52,7 +57,7 @@ export const checkIn = catchAsync(async (req, res) => {
   const today = new Date();
   let userProgress = await Addiction.findOne({ user: req.user._id });
 
-  // Create new progress if doesn't exist
+  // إنشاء تقدم جديد إذا لم يكن موجوداً
   if (!userProgress) {
     userProgress = await Addiction.create({
       user: req.user._id,
@@ -66,13 +71,13 @@ export const checkIn = catchAsync(async (req, res) => {
       ],
     });
   } else {
-    // Find the specific addiction category
+    // البحث عن فئة الإدمان المحددة
     let addiction = userProgress.addictions.find(
       (a) => a.category === category
     );
 
     if (!addiction) {
-      // Create new addiction category
+      // إنشاء فئة إدمان جديدة
       userProgress.addictions.push({
         category,
         days: [today],
@@ -80,7 +85,7 @@ export const checkIn = catchAsync(async (req, res) => {
         streak: 1,
       });
     } else {
-      // Check if already checked in today
+      // التحقق مما إذا تم التسجيل اليوم
       if (
         addiction.lastCheckIn &&
         isSameDay(new Date(addiction.lastCheckIn), today)
@@ -88,28 +93,28 @@ export const checkIn = catchAsync(async (req, res) => {
         throw new AppError("Already checked in today for this addiction", 400);
       }
 
-      // Calculate streak
+      // حساب التتابع
       let newStreak = addiction.streak;
       if (addiction.lastCheckIn) {
         const diff = differenceInDays(today, new Date(addiction.lastCheckIn));
         if (diff === 1) {
-          // Consecutive day
+          // يوم متتالي
           newStreak += 1;
         } else if (diff > 1) {
-          // Streak broken
+          // انقطاع التتابع
           newStreak = 1;
         }
       } else {
         newStreak = 1;
       }
 
-      // Update addiction progress
+      // تحديث تقدم الإدمان
       addiction.days.push(today);
       addiction.lastCheckIn = today;
       addiction.streak = newStreak;
 
+      // التحقق من تحقيق الهدف
       if (addiction.streak >= addiction.targetDays) {
-        // Achievement unlocked!
         res.status(200).json({
           status: "success",
           message: "Congratulations! You've reached your target streak!",
@@ -134,7 +139,7 @@ export const checkIn = catchAsync(async (req, res) => {
   });
 });
 
-// Reset progress for specific addiction
+// إعادة تعيين التقدم لإدمان محدد
 export const resetProgress = catchAsync(async (req, res) => {
   const { category } = req.body;
   if (!category) {
@@ -146,6 +151,7 @@ export const resetProgress = catchAsync(async (req, res) => {
     throw new AppError("No progress found", 404);
   }
 
+  // البحث عن فئة الإدمان
   const addictionIndex = userProgress.addictions.findIndex(
     (a) => a.category === category
   );
@@ -153,6 +159,7 @@ export const resetProgress = catchAsync(async (req, res) => {
     throw new AppError("Addiction category not found", 404);
   }
 
+  // إعادة تعيين البيانات
   userProgress.addictions[addictionIndex] = {
     category,
     days: [],
@@ -171,7 +178,7 @@ export const resetProgress = catchAsync(async (req, res) => {
   });
 });
 
-// Add new addiction category
+// إضافة فئة إدمان جديدة
 export const addAddiction = catchAsync(async (req, res) => {
   const { category } = req.body;
   if (!category) {
@@ -181,6 +188,7 @@ export const addAddiction = catchAsync(async (req, res) => {
   let userProgress = await Addiction.findOne({ user: req.user._id });
 
   if (!userProgress) {
+    // إنشاء سجل جديد مع الفئة الجديدة
     userProgress = await Addiction.create({
       user: req.user._id,
       addictions: [
@@ -193,11 +201,12 @@ export const addAddiction = catchAsync(async (req, res) => {
       ],
     });
   } else {
-    // Check if category already exists
+    // التحقق من وجود الفئة مسبقاً
     if (userProgress.addictions.some((a) => a.category === category)) {
       throw new AppError("Addiction category already exists", 400);
     }
 
+    // إضافة الفئة الجديدة
     userProgress.addictions.push({
       category,
       days: [],
@@ -216,8 +225,7 @@ export const addAddiction = catchAsync(async (req, res) => {
   });
 });
 
-
-// Remove addiction category
+// حذف فئة إدمان
 export const removeAddiction = catchAsync(async (req, res) => {
   const { category } = req.body;
   if (!category) {
@@ -229,7 +237,7 @@ export const removeAddiction = catchAsync(async (req, res) => {
     throw new AppError("No progress found", 404);
   }
 
-  // Check if the category exists
+  // البحث عن الفئة
   const addictionIndex = userProgress.addictions.findIndex(
     (a) => a.category === category
   );
@@ -238,7 +246,7 @@ export const removeAddiction = catchAsync(async (req, res) => {
     throw new AppError("Addiction category not found", 404);
   }
 
-  // Remove the category from the addictions array
+  // حذف الفئة من المصفوفة
   userProgress.addictions.splice(addictionIndex, 1);
   await userProgress.save();
 
