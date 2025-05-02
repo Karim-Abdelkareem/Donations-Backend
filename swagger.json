@@ -8,10 +8,13 @@
   "servers": [
     {
       "url": "https://donations-backend-ten.vercel.app"
+    },
+    {
+      "url": "http://localhost:5000"
     }
   ],
   "paths": {
-    "/api/hello": {
+    "/api/donate": {
       "get": {
         "summary": "Say Hello",
         "description": "Returns a hello message",

@@ -5,19 +5,17 @@ const options = {
   definition: {
     openapi: "3.0.0",
     info: {
-      title: "Your API",
+      title: "Donation API",
       version: "1.0.0",
+      description: "API documentation for Donation backend",
     },
     servers: [
       {
-        url: "https://donations-backend-ten.vercel.app",
-      },
-      {
-        url: "http://localhost:3000",
+        url: "http://localhost:5000", // or your deployed Vercel URL
       },
     ],
   },
-  apis: ["./routes/*.js"],
+  apis: ["./src/modules/**/*.js"], // <-- This must point to files with JSDoc comments
 };
 
 const specs = swaggerJsdoc(options);

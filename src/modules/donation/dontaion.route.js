@@ -7,6 +7,20 @@ import { protect, restrictTo } from "../../middleware/authorization.js";
 // إنشاء موجه جديد
 const router = express.Router();
 
+/**
+ * @openapi
+ * /api/hello:
+ *   get:
+ *     summary: Say Hello
+ *     description: Test endpoint
+ *     responses:
+ *       200:
+ *         description: Success
+ */
+router.get("/hello", (req, res) => {
+  res.json({ message: "Hello from ES6!" });
+});
+
 // مسارات إدارة حملات التبرع
 router.post("/", protect, donationController.createCampaign); // إنشاء حملة تبرع جديدة
 router.get("/", donationController.getAllCampaigns); // عرض جميع الحملات النشطة
