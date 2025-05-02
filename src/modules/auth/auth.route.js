@@ -6,8 +6,10 @@ import express from "express";
 const router = express.Router();
 
 // تسجيل مستخدم جديد
+
 router.post("/register", authController.register);
 // تسجيل الدخول للمستخدم
+
 router.post("/login", authController.login);
 
 // تأكيد البريد الإلكتروني باستخدام الرمز

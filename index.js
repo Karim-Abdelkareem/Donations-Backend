@@ -14,6 +14,8 @@ import donationRoute from "./src/modules/donation/dontaion.route.js";
 import addictionRoute from "./src/modules/addection/addection.route.js";
 import donateRoute from "./src/modules/donate/donate.route.js";
 
+// Import swagger specification
+import { specs, swaggerUi } from "./src/docs/swagger.js";
 // Initialize Express application
 const app = express();
 
@@ -41,6 +43,7 @@ app.use("/api/auth", authRoute);
 app.use("/api/donation", donationRoute);
 app.use("/api/addiction", addictionRoute);
 app.use("/api/donate", donateRoute);
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
 
 //Undefined Routes Handling
 app.all(/(.*)/, (req, res, next) => {
