@@ -2,6 +2,8 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
+import fs from "fs";
+import path from "path";
 
 // Import custom modules and middleware
 import dbConnection from "./src/database/dbConnection.js";
