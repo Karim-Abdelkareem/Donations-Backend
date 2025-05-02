@@ -44,7 +44,16 @@ app.use("/api/donation", donationRoute);
 app.use("/api/addiction", addictionRoute);
 app.use("/api/donate", donateRoute);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
+app.get("/swagger.json", (req, res) => {
+  res.setHeader("Content-Type", "application/json");
+  res.send(specs);
+});
 
+app.get("/docs", (req, res) => {
+  const filePath = path.join(process.cwd(), "swagger.html");
+  const html = fs.readFileSync(filePath, "utf-8");
+  res.send(html);
+});
 //Undefined Routes Handling
 app.all(/(.*)/, (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
